@@ -65,11 +65,11 @@ hashmap_put(hashmap *map, const uint64_t key, void *data)
   size_t index;
 
   if (map == NULL || data == NULL)
-    return new_value;
+    return NULL;
 
   new_value = value_new();
   if (!new_value)
-    return new_value;
+    return NULL;
 
   new_value->key = key;
   new_value->real_data = data;
@@ -77,19 +77,23 @@ hashmap_put(hashmap *map, const uint64_t key, void *data)
   index = key % (map->mapsize);
 
   dlist_append(&(map->realdata[index]), GET_DLIST(new_value));
+  map->elems += 1;
 
-  return new_value;
+  return map;
 }
 
 int
-map_lookup_key_value(const uint64_t key)
+hashmap_key_exist(hashmap* map, const uint64_t key)
 {
   int ret = 0;
   size_t index;
 
-  index = key % MAPSIZE;
+  if (map == NULL)
+    return ret;
 
-  dlist_foreach_safe (&g_map[index]) {
+  index = key % (map->mapsize);
+  dlist_foreach_safe (&(map->realdata[index]))
+  {
     value_t *v = GET_VALUE(__ptr);
 
     if (v->key == key) {
@@ -102,14 +106,13 @@ map_lookup_key_value(const uint64_t key)
 }
 
 value_t *
-net_map_get_value(const uint64_t key)
+hashmap_get_value_object_unsafe(hashmap *map, const uint64_t key)
 {
   void* ret = NULL;
   size_t index;
 
-  index = key % MAPSIZE;
-
-  dlist_foreach_safe (&g_map[index])
+  index = key % (map->mapsize);
+  dlist_foreach_safe (&(map->realdata[index]))
   {
     value_t *v = GET_VALUE(__ptr);
     if (v->key == key) {
@@ -122,7 +125,7 @@ net_map_get_value(const uint64_t key)
 }
 
 void *
-net_map_get_data(const value_t *value)
+hashmap_get_value_data_unsafe(const value_t *value)
 {
   void *ret = NULL;
 
@@ -134,21 +137,12 @@ net_map_get_data(const value_t *value)
 }
 
 value_t *
-net_map_remove(const uint64_t key)
+hashmap_remove(hashmap *map, const uint64_t key)
 {
   void* ret = NULL;
   size_t index;
 
-  index = key % MAPSIZE;
-
-  dlist_foreach_safe (&g_map[index])
-  {
-    value_t *v = GET_VALUE(__ptr);
-    if (v->key == key) {
-      ret = v;
-      break;
-    }
-  }
+  ret =  hashmap_get_value_object_unsafe(map, key);
   if (ret)
     dlist_remove(GET_DLIST(ret));
 

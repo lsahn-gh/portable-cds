@@ -1,5 +1,5 @@
-#ifndef __MAP_H__
-#define __MAP_H__
+#ifndef __HASHMAP_H__
+#define __HASHMAP_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +54,13 @@ hashmap_unlock(hashmap *map)
 {
   if (map)
     pthread_mutex_unlock(&(map->lock));
+}
+
+value_t * hashmap_get_value_object_unsafe(hashmap *map, const uint64_t key);
+static inline value_t *
+hashmap_get_value_object(hashmap *map, const uint64_t key)
+{
+  return hashmap_get_value_object_unsafe(map, key);
 }
 
 /* -- Hash functions with macaddr -- */
